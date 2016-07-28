@@ -18,6 +18,7 @@ type requestBody struct {
 	ObjectAttributes struct {
 		SourceBranch    string `json:"source_branch"`
 		SourceProjectId int    `json:"source_project_id"`
+		TargetProjectId int    `json:"target_project_id"`
 		State           string `json:"state"` // merged, opened or closed
 		LastCommit      struct {
 			Id string `json:"id"`
@@ -67,7 +68,7 @@ func main() {
 		buildsUrl := fmt.Sprintf(
 			"%s/api/v3/projects/%d/repository/commits/%s/builds?private_token=%s",
 			*baseURL,
-			requestBody.ObjectAttributes.SourceProjectId,
+			requestBody.ObjectAttributes.TargetProjectId,
 			requestBody.ObjectAttributes.LastCommit.Id,
 			*privateToken)
 		buildsRes, err := http.Get(buildsUrl)
@@ -86,7 +87,7 @@ func main() {
 		if len(builds) > 0 {
 			return
 		}
-		trigger, err := resolveTrigger(*baseURL, *privateToken, requestBody.ObjectAttributes.SourceProjectId)
+		trigger, err := resolveTrigger(*baseURL, *privateToken, requestBody.ObjectAttributes.TargetProjectId)
 		if err != nil {
 			log.Printf("WARN: %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -95,7 +96,7 @@ func main() {
 		triggerUrl := fmt.Sprintf(
 			"%s/api/v3/projects/%d/trigger/builds?ref=%s&token=%s",
 			*baseURL,
-			requestBody.ObjectAttributes.SourceProjectId,
+			requestBody.ObjectAttributes.TargetProjectId,
 			requestBody.ObjectAttributes.SourceBranch,
 			trigger.Token)
 		triggerRes, err := http.PostForm(triggerUrl, url.Values{})
